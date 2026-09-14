@@ -4,21 +4,21 @@ services:
   mysql:
     # タグ8.0を付けて固定
     # 既製品を使うからimage, 自分で作るならbuild
-    image: "mysql:8.0"
+    image: "mysql:9.7"
     # 箱の中に渡す設定値
     environment:
       # 起動時に作るDB名
-      - "MYSQL_DATABASE=reservation_system_db"
+      - "MYSQL_DATABASE=${MYSQL_DATABASE}"
 
       # root のパスワード
-      - "MYSQL_ROOT_PASSWORD=verysecret"
+      - "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
 
       # 追加で作る一般ユーザー
       # アプリにはこっちのユーザーでreservation_system_dbだけを触らせる
-      - "MYSQL_USER=reservation_user"
+      - "MYSQL_USER=${MYSQL_USER}"
 
       # 一般ユーザーのパスワード
-      - "MYSQL_PASSWORD=secret"
+      - "MYSQL_PASSWORD=${MYSQL_PASSWORD}"
     # 外とつなぐ番号
     ports:
       # PC側の3306を空けておく
@@ -58,7 +58,7 @@ services:
     build: .
     # PCの8080をコンテナの8080につなぐ
     ports:
-      - "8081:8080"
+      - "8080:8080"
 
     # コンテナの中に設定値を渡す
     environment:
