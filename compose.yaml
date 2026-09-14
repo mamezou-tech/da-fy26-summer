@@ -1,0 +1,78 @@
+# 立ち上げる箱の一覧
+services:
+  # 箱の名前
+  mysql:
+    # タグ8.0を付けて固定
+    # 既製品を使うからimage, 自分で作るならbuild
+    image: "mysql:8.0"
+    # 箱の中に渡す設定値
+    environment:
+      # 起動時に作るDB名
+      - "MYSQL_DATABASE=reservation_system_db"
+
+      # root のパスワード
+      - "MYSQL_ROOT_PASSWORD=verysecret"
+
+      # 追加で作る一般ユーザー
+      # アプリにはこっちのユーザーでreservation_system_dbだけを触らせる
+      - "MYSQL_USER=reservation_user"
+
+      # 一般ユーザーのパスワード
+      - "MYSQL_PASSWORD=secret"
+    # 外とつなぐ番号
+    ports:
+      # PC側の3306を空けておく
+      - "3307:3306"
+    volumes:
+      # ↓ MySQLの書き込みが起きてほしい場所(mysql-data)を箱の中の/var/lib/mysqlにつなぐ（外：中）
+      - "mysql-data:/var/lib/mysql"
+    healthcheck:
+      # 使える状態か判定
+      # 5秒ごとにmysqladmin pingを売って返事があるか確かめる
+      test:
+        [
+          # 続きをコマンドと引数として使う
+          "CMD",
+
+          # MySQLの中にあるmysqladminの中の、管理用コマンドping
+          # ”サーバー、応答できますか？”
+          "mysqladmin",
+          "ping",
+
+          # コンテナから見た自分
+          "-h",
+          "127.0.0.1",
+
+          "-ureservation_user",
+          "-psecret",
+        ]
+      # 確認の間隔
+      interval: 5s
+      timeout: 5s
+      # 20回まで待つ
+      retries: 20
+
+  # コンテナ名
+  app:
+    # このフォルダのDockerfileから自分で作る
+    build: .
+    # PCの8080をコンテナの8080につなぐ
+    ports:
+      - "8081:8080"
+
+    # コンテナの中に設定値を渡す
+    environment:
+
+      # docker用のプロファイル
+      # アプリにDBの場所を教える
+      - "SPRING_PROFILES_ACTIVE=docker"
+
+    # mysqlのコンテナを先に起動する
+    depends_on:
+      mysql:
+        # mysqlがhealthyになるまで待つ
+        condition: service_healthy
+
+volumes:
+  # mysql-data: という置き場を作る
+  mysql-data:
